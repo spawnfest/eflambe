@@ -6,6 +6,10 @@
 %%%-------------------------------------------------------------------
 -module(eflambe_output_formatter).
 
+-beamoji_translator(beamoji_emojilist_translator).
+
+-include_lib("beamoji/include/beamoji.hrl").
+
 %%--------------------------------------------------------------------
 %% @doc
 %% This callback exists to inform the tracer of the file extension that should
@@ -14,7 +18,6 @@
 %% @end
 %%--------------------------------------------------------------------
 -callback extension() -> {ok, binary()}.
-
 %%--------------------------------------------------------------------
 %% @doc
 %% This callback exists so the implementation can initialize its own internal
@@ -22,8 +25,8 @@
 %%
 %% @end
 %%--------------------------------------------------------------------
--callback init(Filename :: binary(), Options :: eflambe:options()) -> {ok, State :: any()}.
-
+-callback init(Filename :: binary(), Options :: eflambe:options()) ->
+                  {ok, State :: any()}.
 %%--------------------------------------------------------------------
 %% @doc
 %% This callback exists so the implementation module can process each individual
@@ -31,8 +34,8 @@
 %%
 %% @end
 %%--------------------------------------------------------------------
--callback handle_trace_event(TraceEvent :: any(), State :: any()) -> {ok, UpdatedState :: any()}.
-
+-callback handle_trace_event(TraceEvent :: any(), State :: any()) ->
+                                {ok, UpdatedState :: any()}.
 %%--------------------------------------------------------------------
 %% @doc
 %% This callback exists so the implementation module can finalize processing of

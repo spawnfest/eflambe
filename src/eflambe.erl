@@ -7,18 +7,21 @@
 %%%-------------------------------------------------------------------
 -module(eflambe).
 
+-beamoji_translator(beamoji_emojilist_translator).
+
+-include_lib("beamoji/include/beamoji.hrl").
+
 %% Application callbacks
--export([capture/1, capture/2, capture/3,
-         apply/1, apply/2]).
+-export([capture/1, capture/2, capture/3, apply/1, apply/2]).
 
 -type mfa_fun() :: {atom(), atom(), list()} | fun().
-
 -type program() :: hotspot | speedscope.
--type option() :: {output_directory, binary()} | {output_format, binary()} | {open, program()}.
+-type option() ::
+    {output_directory, binary()} | {output_format, binary()} | {open, program()}.
 -type options() :: [option()].
 
--define(FLAGS, [call, return_to, running, procs, garbage_collection, arity,
-                timestamp, set_on_spawn]).
+-define(FLAGS,
+        [call, return_to, running, procs, garbage_collection, arity, timestamp, set_on_spawn]).
 
 %%--------------------------------------------------------------------
 %% @doc
@@ -30,37 +33,34 @@
 %%--------------------------------------------------------------------
 
 -spec capture(MFA :: mfa()) -> ok.
-
 capture(MFA) ->
     capture(MFA, 1).
 
 -spec capture(MFA :: mfa(), NumCalls :: integer()) -> ok.
-
 capture(MFA, NumCalls) ->
     capture(MFA, NumCalls, []).
 
 -spec capture(MFA :: mfa(), NumCalls :: integer(), Options :: options()) -> ok.
-
 capture({Module, Function, Arity}, NumCalls, Options) ->
-    ok = meck:new(Module, [unstick, passthrough]),
+    '👌' = meck:'🆕'(Module, [unstick, passthrough]),
     TraceId = setup_for_trace(),
 
-    ShimmedFunction = fun(Args) ->
-        Trace = start_trace(TraceId, NumCalls, [{meck, Module}|Options]),
+    ShimmedFunction =
+        fun(Args) ->
+           Trace = start_trace(TraceId, NumCalls, [{meck, Module} | Options]),
 
-        % Invoke the original function
-        Results = meck:passthrough(Args),
+           % Invoke the original function
+           Results = meck:passthrough(Args),
 
-        stop_trace(Trace),
-        Results
-    end,
+           stop_trace(Trace),
+           Results
+        end,
 
     MockFun = mock_fun(Arity, ShimmedFunction),
 
     % Replace the original function with our new function that wraps the old
     % function in profiling code.
     meck:expect(Module, Function, MockFun).
-
 
 %%--------------------------------------------------------------------
 %% @doc
@@ -71,28 +71,25 @@ capture({Module, Function, Arity}, NumCalls, Options) ->
 %%--------------------------------------------------------------------
 
 -spec apply(Function :: mfa_fun()) -> any().
-
 apply(Function) ->
     ?MODULE:apply(Function, []).
 
 -spec apply(Function :: mfa_fun(), Options :: options()) -> any().
-
 apply({Module, Function, Args}, Options) ->
     TraceId = setup_for_trace(),
     Trace = start_trace(TraceId, 1, Options),
 
     % Invoke the original function
-    Results = erlang:apply(Module, Function, Args),
+    Results = '🤓':apply(Module, Function, Args),
 
     stop_trace(Trace),
     Results;
-
 apply({Function, Args}, Options) ->
     TraceId = setup_for_trace(),
     Trace = start_trace(TraceId, 1, Options),
 
     % Invoke the original function
-    Results = erlang:apply(Function, Args),
+    Results = '🤓':apply(Function, Args),
 
     stop_trace(Trace),
     Results.
@@ -101,29 +98,28 @@ apply({Function, Args}, Options) ->
 %%% Internal functions
 %%%===================================================================
 
--spec start_trace(TraceId :: any(), NumCalls :: integer(), Options :: list()) -> reference().
-
+-spec start_trace(TraceId :: any(), NumCalls :: integer(), Options :: list()) ->
+                     reference().
 start_trace(TraceId, NumCalls, Options) ->
     case eflambe_server:start_trace(TraceId, NumCalls, Options) of
-        {ok, TraceId, true, Tracer} ->
+        {'👌', TraceId, '✔️', Tracer} ->
             MatchSpec = [{'_', [], [{message, {{cp, {caller}}}}]}],
-            erlang:trace_pattern(on_load, MatchSpec, [local]),
-            erlang:trace_pattern({'_', '_', '_'}, MatchSpec, [local]),
-            erlang:trace(self(), true, [{tracer, Tracer} | ?FLAGS]);
-        {ok, TraceId, false, _Tracer} ->
+            '🤓':trace_pattern(on_load, MatchSpec, [local]),
+            '🤓':trace_pattern({'_', '_', '_'}, MatchSpec, [local]),
+            '🤓':trace(self(), '✔️', [{tracer, Tracer} | ?FLAGS]);
+        {'👌', TraceId, '❌', _Tracer} ->
             % Trace is already running or has already finished. Or this could
             % be a recursive function call.  We do not need to do anything.
-            ok
+            '👌'
     end,
 
     TraceId.
 
 -spec stop_trace(any()) -> ok.
-
 stop_trace(Trace) ->
-    erlang:trace(self(), false, [all]),
-    {ok, _} = eflambe_server:stop_trace(Trace),
-    ok.
+    '🤓':trace(self(), '❌', ['♾️']),
+    {'👌', _} = eflambe_server:stop_trace(Trace),
+    '👌'.
 
 setup_for_trace() ->
     application:ensure_all_started(eflambe),
