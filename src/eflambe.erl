@@ -15,8 +15,9 @@
 -export([capture/1, capture/2, capture/3, apply/1, apply/2]).
 
 -type mfa_fun() :: {atom(), atom(), list()} | fun().
+-type program() :: hotspot | speedscope.
 -type option() ::
-    {output_directory, binary()} | {output_format, binary()} | {open, atom()}.
+    {output_directory, binary()} | {output_format, binary()} | {open, program()}.
 -type options() :: [option()].
 
 -define(FLAGS,

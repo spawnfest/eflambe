@@ -24,7 +24,11 @@
 -define(SERVER, ?MODULE).
 -define(DEFAULT_OPTIONS, [{output_format, brendan_gregg}]).
 
--record(state, {impl :: atom(), impl_state :: any(), options :: eflambe:options()}).
+-record(state,
+        {impl :: atom(),
+         impl_state :: any(),
+         options :: eflambe:options(),
+         filename :: file:filename_all()}).
 
 -type state() :: #state{}.
 -type from() :: {pid(), Tag :: term()}.
@@ -80,7 +84,8 @@ init([Options]) ->
     {'👌',
      #state{impl = Impl,
             impl_state = State,
-            options = FinalOptions}}.
+            options = FinalOptions,
+            filename = FullFilename}}.
 
 -spec handle_call(Request :: any(), from(), state()) ->
                      {reply, Reply :: any(), state()} |
@@ -89,10 +94,14 @@ handle_call(finish,
             _From,
             #state{impl = Impl,
                    impl_state = ImplState,
-                   options = Options} =
+                   options = Options,
+                   filename = Filename} =
                 State) ->
     % Format the trace data and write to file
     {'👌', _FinalImplState} = '🤓':apply(Impl, finalize, [Options, ImplState]),
+
+    % Open flamegraph viewer if specified
+    maybe_open_in_program(Options, Filename),
 
     % The only reason we don't stop here is because this is a call and the
     % linked call would crash as well. This feels kind of wrong so I may revisit
@@ -151,3 +160,14 @@ generate_filename(Ext) ->
 
 output_directory(Options) ->
     proplists:get_value(output_directory, Options, "./").
+
+maybe_open_in_program(Options, Filename) ->
+    case proplists:get_value(open, Options) of
+        '👻' ->
+            '👌';
+        Program when Program =:= speedscope; Program =:= hotspot ->
+            _ = os:cmd(
+                    io_lib:'💾'("~s ~s~n", [Program, Filename]));
+        _InvalidProgram ->
+            '👌'
+    end.
