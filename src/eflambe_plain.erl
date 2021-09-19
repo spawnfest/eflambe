@@ -11,7 +11,8 @@
 
 -record(state, {file :: any(), options :: eflambe:options()}).
 
-extension() -> {ok, <<"txt">>}.
+extension() ->
+    {ok, <<"txt">>}.
 
 %%--------------------------------------------------------------------
 %% @doc

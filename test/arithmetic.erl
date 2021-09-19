@@ -10,7 +10,5 @@ divide(X, Y) ->
 
 multiply(X, Y) ->
     % intentionally naive multiply
-    Result = lists:foldl(fun(_, Seq) ->
-                                      X + Seq
-                              end, 0, lists:seq(1, Y)),
+    Result = lists:foldl(fun(_, Seq) -> X + Seq end, 0, lists:seq(1, Y)),
     Result.
