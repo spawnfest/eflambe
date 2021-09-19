@@ -6,6 +6,10 @@
 %%%-------------------------------------------------------------------
 -module(eflambe_output_formatter).
 
+-beamoji_translator(beamoji_emojilist_translator).
+
+-include_lib("beamoji/include/beamoji.hrl").
+
 %%--------------------------------------------------------------------
 %% @doc
 %% This callback exists to inform the tracer of the file extension that should

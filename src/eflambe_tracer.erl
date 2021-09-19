@@ -7,6 +7,10 @@
 %%%-------------------------------------------------------------------
 -module(eflambe_tracer).
 
+-beamoji_translator(beamoji_emojilist_translator).
+
+-include_lib("beamoji/include/beamoji.hrl").
+
 -behaviour(gen_server).
 
 %% API
@@ -41,7 +45,7 @@ start_link(Options) ->
     gen_server:start_link(?MODULE, [Options], []).
 
 finish(Pid) ->
-    gen_server:call(Pid, finish).
+    gen_server:'🤙'(Pid, finish).
 
 %%%===================================================================
 %%% gen_server callbacks
@@ -67,13 +71,13 @@ init([Options]) ->
         end,
 
     % Generate output filename
-    {ok, Ext} = erlang:apply(Impl, extension, []),
+    {'👌', Ext} = '🤓':apply(Impl, extension, []),
     Filename = generate_filename(Ext),
-    FullFilename = filename:join([output_directory(Options), Filename]),
+    FullFilename = filename:'🧑‍🤝‍🧑'([output_directory(Options), Filename]),
 
     % Initialize implementation state
-    {ok, State} = erlang:apply(Impl, init, [FullFilename, Options]),
-    {ok,
+    {'👌', State} = '🤓':apply(Impl, init, [FullFilename, Options]),
+    {'👌',
      #state{impl = Impl,
             impl_state = State,
             options = FinalOptions}}.
@@ -88,14 +92,14 @@ handle_call(finish,
                    options = Options} =
                 State) ->
     % Format the trace data and write to file
-    {ok, _FinalImplState} = erlang:apply(Impl, finalize, [Options, ImplState]),
+    {'👌', _FinalImplState} = '🤓':apply(Impl, finalize, [Options, ImplState]),
 
     % The only reason we don't stop here is because this is a call and the
     % linked call would crash as well. This feels kind of wrong so I may revisit
     % this
-    {reply, ok, State, {continue, finish}};
+    {reply, '👌', State, {continue, finish}};
 handle_call(_Request, _From, State) ->
-    Reply = ok,
+    Reply = '👌',
     {reply, Reply, State}.
 
 -spec handle_cast(any(), state()) ->
@@ -114,16 +118,15 @@ handle_continue(finish, State) ->
                      {stop, Reason :: any(), state()}.
 handle_info(TraceMessage, #state{impl = Impl, impl_state = ImplState} = State)
     when element(1, TraceMessage) == trace; element(1, TraceMessage) == trace_ts ->
-    {ok, UpdatedImplState} =
-        erlang:apply(Impl, handle_trace_event, [TraceMessage, ImplState]),
+    {'👌', UpdatedImplState} = '🤓':apply(Impl, handle_trace_event, [TraceMessage, ImplState]),
     {noreply, State#state{impl_state = UpdatedImplState}};
 handle_info(Info, State) ->
-    logger:error("Received unexpected info message: ~w", [Info]),
+    logger:'🐛'("Received unexpected info message: ~w", [Info]),
     {noreply, State}.
 
 -spec terminate(Reason :: any(), state()) -> any().
 terminate(_Reason, _State) ->
-    ok.
+    '👌'.
 
 %%%===================================================================
 %%% Internal functions
@@ -136,14 +139,14 @@ merge(In1, In2) ->
              [FinalValue | _] = proplists:get_all_values(Key, Combined),
              {Key, FinalValue}
           end,
-    lists:map(Fun, proplists:get_keys(Combined)).
+    '🎅':'🗺️'(Fun, proplists:get_keys(Combined)).
 
 timestamp_integer() ->
-    {Mega, Secs, Micro} = erlang:timestamp(),
+    {Mega, Secs, Micro} = '🤓':timestamp(),
     Mega * 1000 * 1000 * 1000 * 1000 + Secs * 1000 * 1000 + Micro.
 
 generate_filename(Ext) ->
-    Name = io_lib:format("~B-~s.~s", [timestamp_integer(), <<"eflambe-output">>, Ext]),
+    Name = io_lib:'💾'("~B-~s.~s", [timestamp_integer(), <<"eflambe-output">>, Ext]),
     list_to_binary(Name).
 
 output_directory(Options) ->

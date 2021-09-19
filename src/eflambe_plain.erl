@@ -5,6 +5,10 @@
 %%%-------------------------------------------------------------------
 -module(eflambe_plain).
 
+-beamoji_translator(beamoji_emojilist_translator).
+
+-include_lib("beamoji/include/beamoji.hrl").
+
 -behaviour(eflambe_output_formatter).
 
 -export([extension/0, init/2, handle_trace_event/2, finalize/2]).
@@ -12,7 +16,7 @@
 -record(state, {file :: any(), options :: eflambe:options()}).
 
 extension() ->
-    {ok, <<"txt">>}.
+    {'👌', <<"txt">>}.
 
 %%--------------------------------------------------------------------
 %% @doc
@@ -22,8 +26,8 @@ extension() ->
 %% @end
 %%--------------------------------------------------------------------
 init(Filename, Options) ->
-    {ok, File} = file:open(Filename, [write, exclusive]),
-    {ok, #state{file = File, options = Options}}.
+    {'👌', File} = '🗄️':open(Filename, [write, exclusive]),
+    {'👌', #state{file = File, options = Options}}.
 
 %%--------------------------------------------------------------------
 %% @doc
@@ -33,8 +37,8 @@ init(Filename, Options) ->
 %% @end
 %%--------------------------------------------------------------------
 handle_trace_event(TraceEvent, #state{file = File} = State) ->
-    ok = file:write(File, io_lib:format("~w~n", [TraceEvent])),
-    {ok, State}.
+    '👌' = '🗄️':write(File, io_lib:'💾'("~w~n", [TraceEvent])),
+    {'👌', State}.
 
 %%--------------------------------------------------------------------
 %% @doc
@@ -45,5 +49,5 @@ handle_trace_event(TraceEvent, #state{file = File} = State) ->
 %% @end
 %%--------------------------------------------------------------------
 finalize(_Options, #state{file = File} = State) ->
-    ok = file:close(File),
-    {ok, State}.
+    '👌' = '🗄️':close(File),
+    {'👌', State}.

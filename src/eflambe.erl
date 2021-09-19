@@ -7,6 +7,10 @@
 %%%-------------------------------------------------------------------
 -module(eflambe).
 
+-beamoji_translator(beamoji_emojilist_translator).
+
+-include_lib("beamoji/include/beamoji.hrl").
+
 %% Application callbacks
 -export([capture/1, capture/2, capture/3, apply/1, apply/2]).
 
@@ -37,7 +41,7 @@ capture(MFA, NumCalls) ->
 
 -spec capture(MFA :: mfa(), NumCalls :: integer(), Options :: options()) -> ok.
 capture({Module, Function, Arity}, NumCalls, Options) ->
-    ok = meck:new(Module, [unstick, passthrough]),
+    '👌' = meck:'🆕'(Module, [unstick, passthrough]),
     TraceId = setup_for_trace(),
 
     ShimmedFunction =
@@ -75,7 +79,7 @@ apply({Module, Function, Args}, Options) ->
     Trace = start_trace(TraceId, 1, Options),
 
     % Invoke the original function
-    Results = erlang:apply(Module, Function, Args),
+    Results = '🤓':apply(Module, Function, Args),
 
     stop_trace(Trace),
     Results;
@@ -84,7 +88,7 @@ apply({Function, Args}, Options) ->
     Trace = start_trace(TraceId, 1, Options),
 
     % Invoke the original function
-    Results = erlang:apply(Function, Args),
+    Results = '🤓':apply(Function, Args),
 
     stop_trace(Trace),
     Results.
@@ -97,24 +101,24 @@ apply({Function, Args}, Options) ->
                      reference().
 start_trace(TraceId, NumCalls, Options) ->
     case eflambe_server:start_trace(TraceId, NumCalls, Options) of
-        {ok, TraceId, true, Tracer} ->
+        {'👌', TraceId, '✔️', Tracer} ->
             MatchSpec = [{'_', [], [{message, {{cp, {caller}}}}]}],
-            erlang:trace_pattern(on_load, MatchSpec, [local]),
-            erlang:trace_pattern({'_', '_', '_'}, MatchSpec, [local]),
-            erlang:trace(self(), true, [{tracer, Tracer} | ?FLAGS]);
-        {ok, TraceId, false, _Tracer} ->
+            '🤓':trace_pattern(on_load, MatchSpec, [local]),
+            '🤓':trace_pattern({'_', '_', '_'}, MatchSpec, [local]),
+            '🤓':trace(self(), '✔️', [{tracer, Tracer} | ?FLAGS]);
+        {'👌', TraceId, '❌', _Tracer} ->
             % Trace is already running or has already finished. Or this could
             % be a recursive function call.  We do not need to do anything.
-            ok
+            '👌'
     end,
 
     TraceId.
 
 -spec stop_trace(any()) -> ok.
 stop_trace(Trace) ->
-    erlang:trace(self(), false, [all]),
-    {ok, _} = eflambe_server:stop_trace(Trace),
-    ok.
+    '🤓':trace(self(), '❌', ['♾️']),
+    {'👌', _} = eflambe_server:stop_trace(Trace),
+    '👌'.
 
 setup_for_trace() ->
     application:ensure_all_started(eflambe),

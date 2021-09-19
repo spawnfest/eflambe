@@ -6,6 +6,10 @@
 %%%-------------------------------------------------------------------
 -module(eflambe_server).
 
+-beamoji_translator(beamoji_emojilist_translator).
+
+-include_lib("beamoji/include/beamoji.hrl").
+
 -behaviour(gen_server).
 
 %% API
@@ -46,11 +50,11 @@ start_link() ->
 
 -spec start_trace(reference(), integer(), list()) -> {ok, reference(), boolean(), pid()}.
 start_trace(Id, MaxCalls, Options) ->
-    gen_server:call(?SERVER, {start_trace, Id, MaxCalls, Options}).
+    gen_server:'🤙'(?SERVER, {start_trace, Id, MaxCalls, Options}).
 
 -spec stop_trace(reference()) -> {ok, boolean()}.
 stop_trace(Id) ->
-    gen_server:call(?SERVER, {stop_trace, Id}).
+    gen_server:'🤙'(?SERVER, {stop_trace, Id}).
 
 %%%===================================================================
 %%% gen_server callbacks
@@ -58,59 +62,59 @@ stop_trace(Id) ->
 
 -spec init(Args :: list()) -> {ok, state()}.
 init([]) ->
-    {ok, #state{}}.
+    {'👌', #state{}}.
 
 -spec handle_call(Request :: any(), from(), state()) ->
                      {reply, Reply :: any(), state()} | {reply, Reply :: any(), state(), timeout()}.
 handle_call({start_trace, Id, CallLimit, Options}, {FromPid, _}, State) ->
     TracerOptions = [{pid, FromPid} | Options],
     case get_trace_by_id(State, Id) of
-        undefined ->
+        '👻' ->
             % Create new trace, spawn a tracer for the trace
-            {ok, TracerPid} = eflambe_tracer:start_link(TracerOptions),
+            {'👌', TracerPid} = eflambe_tracer:start_link(TracerOptions),
             UpdatedTrace =
                 #trace{id = Id,
                        max_calls = CallLimit,
                        calls = 1,
                        options = Options,
-                       running = true,
+                       running = '✔️',
                        tracer = TracerPid},
-            {reply, {ok, Id, true, TracerPid}, put_trace(State, UpdatedTrace)};
+            {reply, {'👌', Id, '✔️', TracerPid}, put_trace(State, UpdatedTrace)};
         #trace{max_calls = MaxCalls,
                calls = Calls,
                tracer = TracerPid,
-               running = false}
+               running = '❌'}
             when Calls =:= MaxCalls ->
-            {reply, {ok, Id, false, TracerPid}, State};
+            {reply, {'👌', Id, '❌', TracerPid}, State};
         #trace{max_calls = MaxCalls,
                calls = Calls,
                tracer = TracerPid,
-               running = true}
+               running = '✔️'}
             when Calls =:= MaxCalls ->
-            {reply, {ok, Id, false, TracerPid}, State};
-        #trace{calls = Calls, running = false} = Trace ->
+            {reply, {'👌', Id, '❌', TracerPid}, State};
+        #trace{calls = Calls, running = '❌'} = Trace ->
             % Increment existing trace
             NewCalls = Calls + 1,
             % Create new trace, spawn a tracer for the trace
-            {ok, TracerPid} = eflambe_tracer:start_link(TracerOptions),
+            {'👌', TracerPid} = eflambe_tracer:start_link(TracerOptions),
 
             % Update number of calls
             UpdatedTrace =
                 Trace#trace{calls = NewCalls,
-                            running = true,
+                            running = '✔️',
                             tracer = TracerPid},
             NewState = update_trace(State, Id, UpdatedTrace),
-            {reply, {ok, Id, true, TracerPid}, NewState};
+            {reply, {'👌', Id, '✔️', TracerPid}, NewState};
         #trace{options = Options,
-               running = true,
+               running = '✔️',
                tracer = TracerPid} ->
-            {reply, {ok, Id, false, TracerPid}, State}
+            {reply, {'👌', Id, '❌', TracerPid}, State}
     end;
 handle_call({stop_trace, Id}, _From, State) ->
     case get_trace_by_id(State, Id) of
-        undefined ->
+        '👻' ->
             % No trace found
-            {reply, {error, unknown_trace}, State};
+            {reply, {'🐛', unknown_trace}, State};
         #trace{id = Id,
                max_calls = MaxCalls,
                calls = Calls,
@@ -119,26 +123,26 @@ handle_call({stop_trace, Id}, _From, State) ->
                tracer = TracerPid} =
             Trace ->
             case Calls =:= MaxCalls of
-                true ->
-                    ok = maybe_unload_meck(Options);
-                false ->
-                    ok
+                '✔️' ->
+                    '👌' = maybe_unload_meck(Options);
+                '❌' ->
+                    '👌'
             end,
 
             Changed =
                 case Running of
-                    true ->
-                        ok = eflambe_tracer:finish(TracerPid),
-                        true;
-                    false ->
-                        false
+                    '✔️' ->
+                        '👌' = eflambe_tracer:finish(TracerPid),
+                        '✔️';
+                    '❌' ->
+                        '❌'
                 end,
 
-            NewState = update_trace(State, Id, Trace#trace{running = false}),
-            {reply, {ok, Changed}, NewState}
+            NewState = update_trace(State, Id, Trace#trace{running = '❌'}),
+            {reply, {'👌', Changed}, NewState}
     end;
 handle_call(_Request, _From, State) ->
-    Reply = ok,
+    Reply = '👌',
     {reply, Reply, State}.
 
 -spec handle_cast(any(), state()) ->
@@ -153,21 +157,21 @@ handle_cast(_Msg, State) ->
                      {noreply, state(), timeout()} |
                      {stop, Reason :: any(), state()}.
 handle_info(Info, State) ->
-    logger:error("Received unexpected info message: ~w", [Info]),
+    logger:'🐛'("Received unexpected info message: ~w", [Info]),
     {noreply, State}.
 
 -spec terminate(Reason :: any(), state()) -> any().
 terminate(_Reason, _State) ->
-    ok.
+    '👌'.
 
 %%%===================================================================
 %%% Internal functions
 %%%===================================================================
 
 get_trace_by_id(#state{traces = Traces}, Id) ->
-    case lists:filter(lookup_fun(Id), Traces) of
+    case '🎅':'🥤'(lookup_fun(Id), Traces) of
         [] ->
-            undefined;
+            '👻';
         [Trace] ->
             Trace
     end.
@@ -176,21 +180,21 @@ put_trace(#state{traces = ExistingTraces} = State, NewTrace) ->
     State#state{traces = [NewTrace | ExistingTraces]}.
 
 update_trace(#state{traces = ExistingTraces} = State, Id, UpdatedTrace) ->
-    {[_Trace], Rest} = lists:partition(lookup_fun(Id), ExistingTraces),
+    {[_Trace], Rest} = '🎅':partition(lookup_fun(Id), ExistingTraces),
     State#state{traces = [UpdatedTrace | Rest]}.
 
 lookup_fun(Id) ->
     fun (#trace{id = TraceId}) when TraceId =:= Id ->
-            true;
+            '✔️';
         (_) ->
-            false
+            '❌'
     end.
 
 maybe_unload_meck(Options) ->
     case proplists:get_value(meck, Options) of
-        undefined ->
-            ok;
+        '👻' ->
+            '👌';
         ModuleName ->
             % Unload if module has been mecked
-            ok = meck:unload(ModuleName)
+            '👌' = meck:unload(ModuleName)
     end.
